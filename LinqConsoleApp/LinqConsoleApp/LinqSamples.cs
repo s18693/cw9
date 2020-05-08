@@ -204,9 +204,13 @@ namespace LinqConsoleApp
                           Nazwisko = emp.Ename,
                           Zawod = emp.Job
                       };
-
+            foreach (var emp in res)
+                Console.WriteLine(emp);
 
             //2. Lambda and Extension methods
+            var res2 = Emps.Where(x => x.Job == "Backend programmer");
+            foreach (var emp in res2)
+                Console.WriteLine(emp);
         }
 
         /// <summary>
@@ -214,8 +218,21 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad2()
         {
-            
-
+            var res = from emp in Emps
+                      where emp.Job == "Frontend programmer" && emp.Salary > 1000
+                      orderby emp.Ename descending
+                      select new
+                      {
+                          //emp nie moze byc bo da nam emp.ToString();
+                          emp.Empno,
+                          emp.Ename,
+                          emp.Job,
+                          emp.Salary,
+                          emp.HireDate,
+                          emp.Deptno,
+                          emp.Mgr
+                      };
+            res.ToList().ForEach(x => Console.WriteLine("ZAD2 " + x));
         }
 
         /// <summary>
@@ -223,7 +240,8 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad3()
         {
-          
+            var res = Emps.Max(x => x.Salary);
+            Console.WriteLine("ZAD3 " + res);
         }
 
         /// <summary>
@@ -231,7 +249,9 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad4()
         {
-
+            var max = Emps.Max(x => x.Salary);
+            var res = Emps.Where(x => x.Salary == max);
+            res.ToList().ForEach(x => Console.WriteLine("ZAD4" + x));
         }
 
         /// <summary>
@@ -239,7 +259,13 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad5()
         {
-
+            var res = from emp in Emps
+                      select new
+                      {
+                          Nazwisko = emp.Ename,
+                          Praca = emp.Job
+                      };
+            res.ToList().ForEach(x => Console.WriteLine($"ZAD5 {x}"));
         }
 
         /// <summary>
@@ -249,7 +275,16 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad6()
         {
+            var res = from values in Emps.
+                      Join(Depts, emp => emp.Deptno, dept => dept.Deptno, (emp, dept) => new { emp, dept })
+                      select new
+                      {
+                          values.emp.Ename,
+                          values.emp.Job,
+                          values.dept.Dname
+                      };
 
+            res.ToList().ForEach(x => Console.WriteLine($"ZAD6 {x}"));
         }
 
         /// <summary>
@@ -257,7 +292,16 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad7()
         {
-
+            var res = from emp in Emps
+                      group emp by emp.Job into empGroup
+                      select new
+                      {
+                          Praca = empGroup.Key,
+                          LiczbaPracownikow = (from emp in Emps
+                                               where emp.Job == empGroup.Key
+                                               select emp).Count()
+                      };
+            res.ToList().ForEach(x => Console.WriteLine($"ZAD7 {x}"));
         }
 
         /// <summary>
@@ -266,7 +310,8 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad8()
         {
-
+            bool worksAs = Emps.Any(x => x.Job == "Backend programmer");
+            Console.WriteLine($"ZAD8 In Emps Backend programmer: { worksAs}");
         }
 
         /// <summary>
@@ -275,7 +320,20 @@ namespace LinqConsoleApp
         /// </summary>
         public void Przyklad9()
         {
-
+            var res = from emp in Emps
+                      where emp.Job == "Frontend programmer"
+                      orderby emp.HireDate descending
+                      select new
+                      {
+                          emp.Empno,
+                          emp.Ename,
+                          emp.Job,
+                          emp.Salary,
+                          emp.HireDate,
+                          emp.Deptno,
+                          emp.Mgr
+                      };
+            Console.WriteLine($"ZAD9 {res.First()}");
         }
 
         /// <summary>
@@ -283,22 +341,60 @@ namespace LinqConsoleApp
         /// UNION
         /// SELECT "Brak wartości", null, null;
         /// </summary>
-        public void Przyklad10Button_Click()
+        /// Button Click
+        public void Przyklad10()
         {
+            //Union wybiera pokolei elementy no repeat
+            var tmp = from emp in Emps
+                      select new
+                      {
+                          emp.Ename,
+                          emp.Job,
+                          emp.HireDate
+                      };
+            //list object bo inaczej krzyczy w union
+            var tmp2 = new List<Object>();
+            tmp2.Add(new Emp
+            {
+                Ename = "Brak wartości",
+                Job = null,
+                HireDate = null
+            });
 
+            var res = tmp.Union(tmp2);
+
+            res.ToList().ForEach(x => Console.WriteLine($"ZAD10 {x}"));
         }
 
         //Znajdź pracownika z najwyższą pensją wykorzystując metodę Aggregate()
         public void Przyklad11()
         {
+            var res = Emps.Select(emp => emp.Salary).Aggregate((a, b) => a > b ? a : b);
 
+            Console.WriteLine($"ZAD11 {res}");
+            //Sprawdzam czy aggregate dobrze dziala
+            Console.WriteLine("ZAD11 " + Emps.Max(x => x.Salary));
         }
 
         //Z pomocą języka LINQ i metody SelectMany wykonaj złączenie
         //typu CROSS JOIN
         public void Przyklad12()
         {
+            //Polaczyc tabelki/wartosci z tabelek
+            var res = Emps.SelectMany(x => Depts, (emp, dept) => new
+            {
+                /*
+                emp.Ename,
+                emp.Job,
+                dept.Deptno,
+                dept.Dname,
+                dept.Loc,
+                */
+                emp,
+                dept
+            });
 
+            res.ToList().ForEach(x => Console.WriteLine($"ZAD12 {x}"));
         }
     }
 }
